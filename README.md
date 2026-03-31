@@ -97,6 +97,7 @@ The chart supports:
 - existing Kubernetes secrets
 - persistent volume claims for PostgreSQL
 - Keycloak realm import from values
+- Keycloak image version override for older CPUs
 
 For a BGP load balancer setup, the frontend service is configured as `LoadBalancer` by default. If your cluster uses MetalLB or another BGP speaker, you can set service annotations and optionally a fixed `loadBalancerIP` in the Helm values.
 

@@ -18,7 +18,7 @@ images:
     pullPolicy: IfNotPresent
   keycloak:
     repository: quay.io/keycloak/keycloak
-    tag: 26.1.4
+    tag: 21.1.2
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -32,7 +32,8 @@ backend:
   service:
     type: ClusterIP
     port: 8000
-  corsOrigins: "https://todo.local"
+  corsOrigins:
+    - "https://todo.local"
   keycloakRealm: "todo-app"
   keycloakFrontendClientId: "todo-frontend"
   keycloakIssuerUrl: "https://auth.todo.local/auth/realms/todo-app"
