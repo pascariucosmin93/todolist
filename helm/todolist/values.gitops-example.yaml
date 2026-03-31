@@ -25,6 +25,8 @@ frontend:
 
 keycloak:
   hostname: "https://auth.todo.example.internal/auth"
+  admin:
+    existingSecret: "todolist-keycloak-admin"
   realmImport:
     json: |
       {
@@ -52,3 +54,7 @@ ingress:
     frontend: todo.example.internal
     backend: api.todo.example.internal
     keycloak: auth.todo.example.internal
+
+postgres:
+  auth:
+    existingSecret: "todolist-postgres"

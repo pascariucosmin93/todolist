@@ -1,6 +1,6 @@
 name: CI
 
-on:
+"on":
   push:
     branches:
       - main
@@ -24,9 +24,9 @@ jobs:
 
       - name: Run backend tests
         env:
-          DATABASE_URL: sqlite+pysqlite:///:memory:
-          KEYCLOAK_ISSUER_URL: http://localhost/auth/realms/todo-app
-          KEYCLOAK_JWKS_URL: http://localhost/auth/realms/todo-app/protocol/openid-connect/certs
+          DATABASE_URL: "sqlite+pysqlite:///:memory:"
+          KEYCLOAK_ISSUER_URL: "http://localhost/auth/realms/todo-app"
+          KEYCLOAK_JWKS_URL: "http://localhost/auth/realms/todo-app/protocol/openid-connect/certs"
         run: pytest
 
   frontend-build:
@@ -48,10 +48,10 @@ jobs:
 
       - name: Build frontend
         env:
-          VITE_API_URL: https://api.todo.local/api/v1
-          VITE_KEYCLOAK_URL: https://auth.todo.local/auth
-          VITE_KEYCLOAK_REALM: todo-app
-          VITE_KEYCLOAK_CLIENT_ID: todo-frontend
+          VITE_API_URL: "https://api.todo.local/api/v1"
+          VITE_KEYCLOAK_URL: "https://auth.todo.local/auth"
+          VITE_KEYCLOAK_REALM: "todo-app"
+          VITE_KEYCLOAK_CLIENT_ID: "todo-frontend"
         run: npm run build
 
   helm-validate:
@@ -66,4 +66,3 @@ jobs:
 
       - name: Render chart
         run: helm template todo helm/todolist -f helm/todolist/values.gitops-example.yaml >/tmp/rendered.yaml
-

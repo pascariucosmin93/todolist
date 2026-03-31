@@ -63,10 +63,10 @@ postgres:
     size: 5Gi
     storageClass: ""
   auth:
-    database: todos
-    username: todos
-    password: todos
-    existingSecret: ""
+    database: ""
+    username: ""
+    password: ""
+    existingSecret: "todolist-postgres"
     existingSecretKeys:
       database: POSTGRES_DB
       username: POSTGRES_USER
@@ -78,9 +78,9 @@ keycloak:
   service:
     port: 8080
   admin:
-    user: admin
-    password: admin123
-    existingSecret: ""
+    user: ""
+    password: ""
+    existingSecret: "todolist-keycloak-admin"
     existingSecretKeys:
       user: KEYCLOAK_ADMIN
       password: KEYCLOAK_ADMIN_PASSWORD
@@ -120,4 +120,4 @@ ingress:
   tls: []
 
 secrets:
-  create: true
+  create: false

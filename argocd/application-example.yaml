@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: git@github.com:pascariucosmin93/todolist-giops.git
     targetRevision: main
-    path: apps/todolist
+    path: k8s/chart
     helm:
       valueFiles:
         - values.yaml

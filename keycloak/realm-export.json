@@ -27,23 +27,5 @@
         "pkce.code.challenge.method": "S256"
       }
     }
-  ],
-  "users": [
-    {
-      "username": "demo",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Demo",
-      "lastName": "User",
-      "email": "demo@example.com",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "Demo123!",
-          "temporary": false
-        }
-      ]
-    }
   ]
 }
-
