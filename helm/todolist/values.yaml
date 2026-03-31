@@ -1,0 +1,123 @@
+namespaceOverride: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+images:
+  backend:
+    repository: ghcr.io/example/todo-backend
+    tag: "0.0.1"
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: ghcr.io/example/todo-frontend
+    tag: "0.0.1"
+    pullPolicy: IfNotPresent
+  postgres:
+    repository: postgres
+    tag: 16-alpine
+    pullPolicy: IfNotPresent
+  keycloak:
+    repository: quay.io/keycloak/keycloak
+    tag: 26.1.4
+    pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: false
+  name: ""
+
+backend:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8000
+  corsOrigins: "https://todo.local"
+  keycloakRealm: "todo-app"
+  keycloakFrontendClientId: "todo-frontend"
+  keycloakIssuerUrl: "https://auth.todo.local/auth/realms/todo-app"
+  keycloakJwksUrl: "http://{{ include \"todolist.keycloakFullname\" . }}:8080/auth/realms/todo-app/protocol/openid-connect/certs"
+  resources: {}
+
+frontend:
+  replicaCount: 1
+  service:
+    type: LoadBalancer
+    port: 80
+    annotations: {}
+    loadBalancerIP: ""
+    externalTrafficPolicy: Cluster
+  runtimeConfig:
+    apiUrl: "https://api.todo.local/api/v1"
+    keycloakUrl: "https://auth.todo.local/auth"
+    keycloakRealm: "todo-app"
+    keycloakClientId: "todo-frontend"
+  resources: {}
+
+postgres:
+  enabled: true
+  service:
+    port: 5432
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  auth:
+    database: todos
+    username: todos
+    password: todos
+    existingSecret: ""
+    existingSecretKeys:
+      database: POSTGRES_DB
+      username: POSTGRES_USER
+      password: POSTGRES_PASSWORD
+  resources: {}
+
+keycloak:
+  enabled: true
+  service:
+    port: 8080
+  admin:
+    user: admin
+    password: admin123
+    existingSecret: ""
+    existingSecretKeys:
+      user: KEYCLOAK_ADMIN
+      password: KEYCLOAK_ADMIN_PASSWORD
+  httpRelativePath: /auth
+  hostname: "https://auth.todo.local/auth"
+  hostnameStrict: "false"
+  realmImport:
+    enabled: true
+    json: |
+      {
+        "realm": "todo-app",
+        "enabled": true,
+        "clients": [
+          {
+            "clientId": "todo-frontend",
+            "enabled": true,
+            "publicClient": true,
+            "standardFlowEnabled": true,
+            "redirectUris": ["https://todo.local/*"],
+            "webOrigins": ["https://todo.local"],
+            "attributes": {
+              "pkce.code.challenge.method": "S256"
+            }
+          }
+        ]
+      }
+  resources: {}
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    frontend: todo.local
+    backend: api.todo.local
+    keycloak: auth.todo.local
+  tls: []
+
+secrets:
+  create: true

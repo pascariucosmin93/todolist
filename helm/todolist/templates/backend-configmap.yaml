@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todolist.backendFullname" . }}-config
+  namespace: {{ include "todolist.namespace" . }}
+  labels:
+    {{- include "todolist.labels" . | nindent 4 }}
+data:
+  CORS_ORIGINS: {{ .Values.backend.corsOrigins | quote }}
+  KEYCLOAK_REALM: {{ .Values.backend.keycloakRealm | quote }}
+  KEYCLOAK_FRONTEND_CLIENT_ID: {{ .Values.backend.keycloakFrontendClientId | quote }}
+  KEYCLOAK_ISSUER_URL: {{ .Values.backend.keycloakIssuerUrl | quote }}
+  KEYCLOAK_JWKS_URL: {{ tpl .Values.backend.keycloakJwksUrl . | quote }}
+

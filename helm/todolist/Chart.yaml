@@ -1,0 +1,6 @@
+apiVersion: v2
+name: todolist
+description: Todo application with FastAPI, React, PostgreSQL, and Keycloak
+type: application
+version: 0.0.1
+appVersion: "0.0.1"

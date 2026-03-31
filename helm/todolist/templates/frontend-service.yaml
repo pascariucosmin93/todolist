@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "todolist.frontendFullname" . }}
+  namespace: {{ include "todolist.namespace" . }}
+  labels:
+    {{- include "todolist.labels" . | nindent 4 }}
+  {{- if .Values.frontend.service.annotations }}
+  annotations:
+    {{- toYaml .Values.frontend.service.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+  {{- if .Values.frontend.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.frontend.service.loadBalancerIP }}
+  {{- end }}
+  {{- if eq .Values.frontend.service.type "LoadBalancer" }}
+  externalTrafficPolicy: {{ .Values.frontend.service.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    app.kubernetes.io/component: frontend
+    {{- include "todolist.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.frontend.service.port }}
+      targetPort: http

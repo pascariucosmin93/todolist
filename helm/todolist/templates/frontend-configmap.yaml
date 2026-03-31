@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todolist.frontendFullname" . }}-config
+  namespace: {{ include "todolist.namespace" . }}
+  labels:
+    {{- include "todolist.labels" . | nindent 4 }}
+data:
+  VITE_API_URL: {{ .Values.frontend.runtimeConfig.apiUrl | quote }}
+  VITE_KEYCLOAK_URL: {{ .Values.frontend.runtimeConfig.keycloakUrl | quote }}
+  VITE_KEYCLOAK_REALM: {{ .Values.frontend.runtimeConfig.keycloakRealm | quote }}
+  VITE_KEYCLOAK_CLIENT_ID: {{ .Values.frontend.runtimeConfig.keycloakClientId | quote }}
+

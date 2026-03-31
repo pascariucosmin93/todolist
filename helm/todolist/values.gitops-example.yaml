@@ -1,0 +1,54 @@
+images:
+  backend:
+    repository: ghcr.io/pascariucosmin93/todo-backend
+    tag: "0.0.1"
+  frontend:
+    repository: ghcr.io/pascariucosmin93/todo-frontend
+    tag: "0.0.1"
+
+backend:
+  corsOrigins: "https://todo.example.internal"
+  keycloakIssuerUrl: "https://auth.todo.example.internal/auth/realms/todo-app"
+  keycloakJwksUrl: "http://todo-todolist-keycloak:8080/auth/realms/todo-app/protocol/openid-connect/certs"
+
+frontend:
+  service:
+    type: LoadBalancer
+    annotations: {}
+    loadBalancerIP: ""
+    externalTrafficPolicy: Cluster
+  runtimeConfig:
+    apiUrl: "https://api.todo.example.internal/api/v1"
+    keycloakUrl: "https://auth.todo.example.internal/auth"
+    keycloakRealm: "todo-app"
+    keycloakClientId: "todo-frontend"
+
+keycloak:
+  hostname: "https://auth.todo.example.internal/auth"
+  realmImport:
+    json: |
+      {
+        "realm": "todo-app",
+        "enabled": true,
+        "clients": [
+          {
+            "clientId": "todo-frontend",
+            "enabled": true,
+            "publicClient": true,
+            "standardFlowEnabled": true,
+            "redirectUris": ["https://todo.example.internal/*"],
+            "webOrigins": ["https://todo.example.internal"],
+            "attributes": {
+              "pkce.code.challenge.method": "S256"
+            }
+          }
+        ]
+      }
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    frontend: todo.example.internal
+    backend: api.todo.example.internal
+    keycloak: auth.todo.example.internal
