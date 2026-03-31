@@ -39,11 +39,39 @@ jobs:
           git clone "https://${GITOPS_PUSH_USER}:${GITOPS_PUSH_TOKEN}@${REPO_NO_SCHEME}" /tmp/todolist-gitops
           git -C /tmp/todolist-gitops checkout "${{ github.event.inputs.gitops_branch }}"
 
-      - name: Update promoted image versions
+      - name: Update GitOps values with promoted version and runtime secrets
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          KEYCLOAK_ADMIN: ${{ secrets.KEYCLOAK_ADMIN }}
+          KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
         run: |
-          VALUES_FILE="/tmp/todolist-gitops/${{ github.event.inputs.gitops_path }}/values.yaml"
-          perl -0pi -e 's|(backend:\n\s+repository:.*\n\s+tag: )"[^"]*"|${1}"'"${{ github.event.inputs.version }}"'"|g' "${VALUES_FILE}"
-          perl -0pi -e 's|(frontend:\n\s+repository:.*\n\s+tag: )"[^"]*"|${1}"'"${{ github.event.inputs.version }}"'"|g' "${VALUES_FILE}"
+          export VALUES_FILE="/tmp/todolist-gitops/${{ github.event.inputs.gitops_path }}/values.yaml"
+          ruby <<'RUBY'
+          require "yaml"
+
+          values_file = ENV.fetch("VALUES_FILE")
+          values = YAML.load_file(values_file)
+
+          values["images"]["backend"]["tag"] = ENV.fetch("VERSION")
+          values["images"]["frontend"]["tag"] = ENV.fetch("VERSION")
+
+          values["secrets"]["create"] = true
+
+          values["postgres"]["auth"]["database"] = ENV.fetch("POSTGRES_DB")
+          values["postgres"]["auth"]["username"] = ENV.fetch("POSTGRES_USER")
+          values["postgres"]["auth"]["password"] = ENV.fetch("POSTGRES_PASSWORD")
+          values["postgres"]["auth"]["existingSecret"] = ""
+
+          values["keycloak"]["admin"]["user"] = ENV.fetch("KEYCLOAK_ADMIN")
+          values["keycloak"]["admin"]["password"] = ENV.fetch("KEYCLOAK_ADMIN_PASSWORD")
+          values["keycloak"]["admin"]["existingSecret"] = ""
+
+          File.write(values_file, values.to_yaml(line_width: -1))
+          RUBY
+        shell: bash
 
       - name: Commit and push GitOps changes
         env:
@@ -54,4 +82,3 @@ jobs:
           git -C /tmp/todolist-gitops add .
           git -C /tmp/todolist-gitops commit -m "Promote todolist to ${VERSION}" || exit 0
           git -C /tmp/todolist-gitops push origin "${{ github.event.inputs.gitops_branch }}"
-

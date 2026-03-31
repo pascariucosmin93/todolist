@@ -168,12 +168,17 @@ Two GitHub Actions workflows are included in [.github/workflows](/Users/cosmin.p
 - `release.yml`
   Builds and pushes versioned Docker images to GHCR. Intended for versions like `0.0.1`.
 - `promote.yml`
-  Updates only the GitOps repository to a promoted version such as `1.0.0`.
+  Updates the GitOps repository to a promoted version such as `1.0.0` and injects database and Keycloak admin secrets from GitHub Actions secrets into the GitOps Helm values.
 
 Expected GitHub secrets:
 
 - `GITOPS_PUSH_USER`
 - `GITOPS_PUSH_TOKEN`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `KEYCLOAK_ADMIN`
+- `KEYCLOAK_ADMIN_PASSWORD`
 
 Promotion defaults:
 
