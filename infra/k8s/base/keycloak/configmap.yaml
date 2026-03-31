@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+  namespace: todo-app
+data:
+  realm-export.json: |
+    {
+      "realm": "todo-app",
+      "enabled": true,
+      "clients": [
+        {
+          "clientId": "todo-frontend",
+          "enabled": true,
+          "publicClient": true,
+          "standardFlowEnabled": true,
+          "redirectUris": ["https://todo.local/*"],
+          "webOrigins": ["https://todo.local"],
+          "attributes": {
+            "pkce.code.challenge.method": "S256"
+          }
+        }
+      ]
+    }
+
