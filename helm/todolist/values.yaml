@@ -26,10 +26,10 @@ serviceAccount:
 backend:
   replicaCount: 1
   service:
-    type: ClusterIP
+    type: LoadBalancer
     port: 8000
   corsOrigins:
-    - "https://todo.local"
+    - "http://10.13.13.101:8097"
   resources: {}
 
 frontend:
@@ -41,16 +41,16 @@ frontend:
     loadBalancerIP: ""
     externalTrafficPolicy: Cluster
   runtimeConfig:
-    apiUrl: "https://api.todo.local/api/v1"
+    apiUrl: "http://10.13.13.101:8100/api/v1"
   resources: {}
 
 auth:
-  authorityUrl: "https://auth.todo.local/application/o/todo-app/"
-  issuerUrl: "https://auth.todo.local/application/o/todo-app/"
-  jwksUrl: "https://auth.todo.local/application/o/todo-app/jwks/"
+  authorityUrl: "http://10.13.13.101:8098/application/o/todo-app/"
+  issuerUrl: "http://10.13.13.101:8098/application/o/todo-app/"
+  jwksUrl: "http://10.13.13.101:8098/application/o/todo-app/jwks/"
   clientId: "todo-frontend"
-  redirectUri: "https://todo.local/"
-  postLogoutRedirectUri: "https://todo.local/"
+  redirectUri: "http://10.13.13.101:8097/"
+  postLogoutRedirectUri: "http://10.13.13.101:8097/"
 
 postgres:
   enabled: true
@@ -72,7 +72,7 @@ postgres:
   resources: {}
 
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
   annotations: {}
   hosts:
