@@ -1,47 +1,185 @@
-name: Release
+name: Build & Push to GHCR
 
 "on":
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "helm/todolist/**"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
-    inputs:
-      version:
-        description: Docker image version to build and publish
-        required: true
-        default: "0.0.1"
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  GITOPS_REPO: https://github.com/pascariucosmin93/todolist-giops.git
+
 jobs:
-  release:
+  build-test-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - uses: docker/login-action@v3
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          PYTHONPATH: "."
+          DATABASE_URL: "sqlite+pysqlite:///:memory:"
+          KEYCLOAK_ISSUER_URL: "http://localhost/auth/realms/todo-app"
+          KEYCLOAK_JWKS_URL: "http://localhost/auth/realms/todo-app/protocol/openid-connect/certs"
+        run: pytest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_URL: "https://api.todo.local/api/v1"
+          VITE_KEYCLOAK_URL: "https://auth.todo.local/auth"
+          VITE_KEYCLOAK_REALM: "todo-app"
+          VITE_KEYCLOAK_CLIENT_ID: "todo-frontend"
+        run: npm run build
+
+      - uses: azure/setup-helm@v4
+
+      - name: Lint chart
+        run: helm lint helm/todolist
+
+      - name: Render chart
+        run: helm template todo helm/todolist -f helm/todolist/values.gitops-example.yaml >/tmp/rendered.yaml
+
+      - name: Set version metadata
+        id: vars
+        run: |
+          echo "short_sha=${GITHUB_SHA::6}" >> "$GITHUB_OUTPUT"
+          echo "dev_version=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/todo-backend:${{ github.event.inputs.version }}
+      - name: Set image names
+        id: img
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "backend=ghcr.io/$OWNER/todo-backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=ghcr.io/$OWNER/todo-frontend" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: true
-          build-args: |
-            VITE_API_URL=https://api.todo.example.internal/api/v1
-            VITE_KEYCLOAK_URL=https://auth.todo.example.internal/auth
-            VITE_KEYCLOAK_REALM=todo-app
-            VITE_KEYCLOAK_CLIENT_ID=todo-frontend
-          tags: ghcr.io/${{ github.repository_owner }}/todo-frontend:${{ github.event.inputs.version }}
+      - name: Build backend image
+        run: |
+          docker build \
+            -t ${{ steps.img.outputs.backend }}:${{ steps.vars.outputs.short_sha }} \
+            -t ${{ steps.img.outputs.backend }}:${{ steps.vars.outputs.dev_version }} \
+            ./backend
 
+      - name: Build frontend image
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=https://api.todo.example.internal/api/v1 \
+            --build-arg VITE_KEYCLOAK_URL=https://auth.todo.example.internal/auth \
+            --build-arg VITE_KEYCLOAK_REALM=todo-app \
+            --build-arg VITE_KEYCLOAK_CLIENT_ID=todo-frontend \
+            -t ${{ steps.img.outputs.frontend }}:${{ steps.vars.outputs.short_sha }} \
+            -t ${{ steps.img.outputs.frontend }}:${{ steps.vars.outputs.dev_version }} \
+            ./frontend
+
+      - name: Push backend tags
+        run: |
+          docker push ${{ steps.img.outputs.backend }}:${{ steps.vars.outputs.short_sha }}
+          docker push ${{ steps.img.outputs.backend }}:${{ steps.vars.outputs.dev_version }}
+
+      - name: Push frontend tags
+        run: |
+          docker push ${{ steps.img.outputs.frontend }}:${{ steps.vars.outputs.short_sha }}
+          docker push ${{ steps.img.outputs.frontend }}:${{ steps.vars.outputs.dev_version }}
+
+      - name: Update todolist-giops image tags
+        env:
+          DEV_VERSION: ${{ steps.vars.outputs.dev_version }}
+          IMAGE_OWNER: ${{ github.repository_owner }}
+          GITOPS_PUSH_USER: ${{ secrets.GITOPS_PUSH_USER }}
+          GITOPS_PUSH_TOKEN: ${{ secrets.GITOPS_PUSH_TOKEN }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          KEYCLOAK_ADMIN: ${{ secrets.KEYCLOAK_ADMIN }}
+          KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GITOPS_PUSH_USER:-}" ] || [ -z "${GITOPS_PUSH_TOKEN:-}" ]; then
+            echo "GITOPS_PUSH_USER / GITOPS_PUSH_TOKEN not set; skipping todolist-giops update."
+            exit 0
+          fi
+
+          AUTH_REPO=$(echo "$GITOPS_REPO" | sed "s#https://#https://${GITOPS_PUSH_USER}:${GITOPS_PUSH_TOKEN}@#")
+          WORKDIR=$(mktemp -d)
+
+          git clone "$AUTH_REPO" "$WORKDIR/gitops"
+          cd "$WORKDIR/gitops"
+
+          ruby <<'RUBY'
+          require "yaml"
+
+          values_path = "k8s/chart/values.yaml"
+          values = YAML.load_file(values_path)
+
+          owner = ENV.fetch("IMAGE_OWNER").downcase
+          values["images"]["backend"]["repository"] = "ghcr.io/#{owner}/todo-backend"
+          values["images"]["frontend"]["repository"] = "ghcr.io/#{owner}/todo-frontend"
+          values["images"]["backend"]["tag"] = ENV.fetch("DEV_VERSION")
+          values["images"]["frontend"]["tag"] = ENV.fetch("DEV_VERSION")
+
+          values["secrets"]["create"] = true
+          values["postgres"]["auth"]["database"] = ENV.fetch("POSTGRES_DB")
+          values["postgres"]["auth"]["username"] = ENV.fetch("POSTGRES_USER")
+          values["postgres"]["auth"]["password"] = ENV.fetch("POSTGRES_PASSWORD")
+          values["postgres"]["auth"]["existingSecret"] = ""
+          values["keycloak"]["admin"]["user"] = ENV.fetch("KEYCLOAK_ADMIN")
+          values["keycloak"]["admin"]["password"] = ENV.fetch("KEYCLOAK_ADMIN_PASSWORD")
+          values["keycloak"]["admin"]["existingSecret"] = ""
+
+          File.write(values_path, values.to_yaml(line_width: -1))
+          RUBY
+
+          if git diff --quiet -- k8s/chart/values.yaml; then
+            echo "todolist-giops already up-to-date"
+            exit 0
+          fi
+
+          git config user.name "Todolist CI Bot"
+          git config user.email "todolist-ci-bot@users.noreply.github.com"
+          git add k8s/chart/values.yaml
+          git commit -m "chore(gitops): deploy dev version ${DEV_VERSION}"
+          git push origin main

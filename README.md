@@ -166,9 +166,9 @@ Two GitHub Actions workflows are included in [.github/workflows](/Users/cosmin.p
 - `ci.yml`
   Runs backend tests, frontend build, and Helm validation on pushes and pull requests.
 - `release.yml`
-  Builds and pushes versioned Docker images to GHCR. Intended for versions like `0.0.1`.
+  On `main`, builds and pushes dev image tags such as `0.0.<run_number>` and automatically updates `todolist-giops/k8s/chart/values.yaml`, similar to the `calculatorgaz -> gaz-gitops` flow.
 - `promote.yml`
-  Updates the GitOps repository to a promoted version such as `1.0.0` and injects database and Keycloak admin secrets from GitHub Actions secrets into the GitOps Helm values.
+  Promotes an existing source tag to a release version such as `1.0.0`, pushes release aliases to GHCR, and can also update `todolist-giops` to the promoted version.
 
 Expected GitHub secrets:
 
@@ -184,6 +184,13 @@ Promotion defaults:
 
 - initial app version: `0.0.1`
 - production promotion example: `1.0.0`
+
+Recommended flow:
+
+1. push to `main`
+2. `release.yml` builds images like `0.0.15` and updates `todolist-giops`
+3. ArgoCD syncs the dev version from `todolist-giops`
+4. when ready, run `promote.yml` with `source_tag=0.0.15` and `release_version=1.0.0`
 ```
 
 ## Notes
