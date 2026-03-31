@@ -26,7 +26,7 @@ serviceAccount:
 backend:
   replicaCount: 1
   service:
-    type: LoadBalancer
+    type: ClusterIP
     port: 8000
   corsOrigins:
     - "https://todo.example.internal"
