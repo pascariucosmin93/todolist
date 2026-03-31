@@ -24,6 +24,7 @@ jobs:
 
       - name: Run backend tests
         env:
+          PYTHONPATH: "."
           DATABASE_URL: "sqlite+pysqlite:///:memory:"
           KEYCLOAK_ISSUER_URL: "http://localhost/auth/realms/todo-app"
           KEYCLOAK_JWKS_URL: "http://localhost/auth/realms/todo-app/protocol/openid-connect/certs"
