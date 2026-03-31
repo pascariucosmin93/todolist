@@ -7,7 +7,7 @@ metadata:
     {{- include "todolist.labels" . | nindent 4 }}
 data:
   VITE_API_URL: {{ .Values.frontend.runtimeConfig.apiUrl | quote }}
-  VITE_KEYCLOAK_URL: {{ .Values.frontend.runtimeConfig.keycloakUrl | quote }}
-  VITE_KEYCLOAK_REALM: {{ .Values.frontend.runtimeConfig.keycloakRealm | quote }}
-  VITE_KEYCLOAK_CLIENT_ID: {{ .Values.frontend.runtimeConfig.keycloakClientId | quote }}
-
+  VITE_AUTH_AUTHORITY: {{ .Values.auth.authorityUrl | quote }}
+  VITE_AUTH_CLIENT_ID: {{ .Values.auth.clientId | quote }}
+  VITE_AUTH_REDIRECT_URI: {{ .Values.auth.redirectUri | quote }}
+  VITE_AUTH_POST_LOGOUT_REDIRECT_URI: {{ .Values.auth.postLogoutRedirectUri | quote }}

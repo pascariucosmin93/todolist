@@ -16,10 +16,6 @@ images:
     repository: postgres
     tag: 16-alpine
     pullPolicy: IfNotPresent
-  keycloak:
-    repository: quay.io/keycloak/keycloak
-    tag: 21.1.2
-    pullPolicy: IfNotPresent
 
 imagePullSecrets: []
 
@@ -34,10 +30,6 @@ backend:
     port: 8000
   corsOrigins:
     - "https://todo.local"
-  keycloakRealm: "todo-app"
-  keycloakFrontendClientId: "todo-frontend"
-  keycloakIssuerUrl: "https://auth.todo.local/auth/realms/todo-app"
-  keycloakJwksUrl: "http://{{ include \"todolist.keycloakFullname\" . }}:8080/auth/realms/todo-app/protocol/openid-connect/certs"
   resources: {}
 
 frontend:
@@ -50,10 +42,15 @@ frontend:
     externalTrafficPolicy: Cluster
   runtimeConfig:
     apiUrl: "https://api.todo.local/api/v1"
-    keycloakUrl: "https://auth.todo.local/auth"
-    keycloakRealm: "todo-app"
-    keycloakClientId: "todo-frontend"
   resources: {}
+
+auth:
+  authorityUrl: "https://auth.todo.local/application/o/todo-app/"
+  issuerUrl: "https://auth.todo.local/application/o/todo-app/"
+  jwksUrl: "https://auth.todo.local/application/o/todo-app/jwks/"
+  clientId: "todo-frontend"
+  redirectUri: "https://todo.local/"
+  postLogoutRedirectUri: "https://todo.local/"
 
 postgres:
   enabled: true
@@ -74,42 +71,6 @@ postgres:
       password: POSTGRES_PASSWORD
   resources: {}
 
-keycloak:
-  enabled: true
-  service:
-    port: 8080
-  admin:
-    user: ""
-    password: ""
-    existingSecret: "todolist-keycloak-admin"
-    existingSecretKeys:
-      user: KEYCLOAK_ADMIN
-      password: KEYCLOAK_ADMIN_PASSWORD
-  httpRelativePath: /auth
-  hostname: "https://auth.todo.local/auth"
-  hostnameStrict: "false"
-  realmImport:
-    enabled: true
-    json: |
-      {
-        "realm": "todo-app",
-        "enabled": true,
-        "clients": [
-          {
-            "clientId": "todo-frontend",
-            "enabled": true,
-            "publicClient": true,
-            "standardFlowEnabled": true,
-            "redirectUris": ["https://todo.local/*"],
-            "webOrigins": ["https://todo.local"],
-            "attributes": {
-              "pkce.code.challenge.method": "S256"
-            }
-          }
-        ]
-      }
-  resources: {}
-
 ingress:
   enabled: true
   className: nginx
@@ -117,7 +78,6 @@ ingress:
   hosts:
     frontend: todo.local
     backend: api.todo.local
-    keycloak: auth.todo.local
   tls: []
 
 secrets:

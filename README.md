@@ -1,4 +1,4 @@
-# Todo App with Keycloak
+# Todo App with Authentik
 
 This repository contains a small full-stack todo application designed to run locally with Docker and later be deployed to Kubernetes through Helm and ArgoCD.
 
@@ -7,7 +7,7 @@ This repository contains a small full-stack todo application designed to run loc
 - Python backend with `FastAPI`
 - React frontend with `Vite`
 - `PostgreSQL` database
-- Authentication with `Keycloak` using OIDC and PKCE
+- Authentication with external `Authentik` using OIDC and PKCE
 - Local runtime with `Docker Compose`
 - Kubernetes packaging with `Helm`
 - CI/CD with `GitHub Actions`
@@ -20,7 +20,6 @@ todolist-keycloak/
 ├── frontend/
 ├── helm/todolist/
 ├── infra/k8s/base/
-├── keycloak/
 ├── docker-compose.yml
 └── .env.example
 ```
@@ -33,35 +32,20 @@ todolist-keycloak/
 cp .env.example .env
 ```
 
-2. Start the stack:
+2. Point the OIDC values to your Authentik tenant.
+
+3. Start the stack:
 
 ```bash
 docker compose up --build
 ```
 
-3. Open the services:
-
-- frontend: `http://localhost:3000`
-- backend docs: `http://localhost:8000/docs`
-- Keycloak through frontend proxy: `http://localhost:3000/auth`
-- Keycloak direct access: `http://localhost:8080/auth`
-
-## Demo Credentials
-
-No demo credentials are stored in the repository.
-
-You must provide:
-
-- PostgreSQL database name, username, and password
-- Keycloak admin username and password
-- optional application user accounts directly in Keycloak
-
 ## Authentication Flow
 
-- the frontend uses `keycloak-js` with PKCE
-- the user authenticates in Keycloak
+- the frontend uses generic OIDC Authorization Code + PKCE
+- the user authenticates in Authentik
 - the frontend sends the access token as a bearer token to the backend
-- the backend validates the token issuer and fetches signing keys from the internal JWKS endpoint
+- the backend validates the issuer and JWKS
 - todos are stored per authenticated user using the token `sub`
 
 ## Helm Chart
@@ -73,79 +57,24 @@ It packages:
 - frontend
 - backend
 - PostgreSQL
-- Keycloak
 - ingress
 - config maps and secrets
 
-Default image version:
+It expects an external Authentik deployment and configurable OIDC endpoints:
 
-- backend: `0.0.1`
-- frontend: `0.0.1`
+- `auth.authorityUrl`
+- `auth.issuerUrl`
+- `auth.jwksUrl`
+- `auth.clientId`
+- `auth.redirectUri`
+- `auth.postLogoutRedirectUri`
 
-Basic commands:
+## Kubernetes Secret
 
-```bash
-helm lint helm/todolist
-helm template todo helm/todolist
-```
+Required Kubernetes secret:
 
-The chart supports:
-
-- configurable image repositories and tags
-- frontend service as `LoadBalancer` for BGP-based exposure
-- optional ingress
-- existing Kubernetes secrets
-- persistent volume claims for PostgreSQL
-- Keycloak realm import from values
-- Keycloak image version override for older CPUs
-
-For a BGP load balancer setup, the frontend service is configured as `LoadBalancer` by default. If your cluster uses MetalLB or another BGP speaker, you can set service annotations and optionally a fixed `loadBalancerIP` in the Helm values.
-
-## ArgoCD / GitOps
-
-Recommended flow:
-
-1. Build and push `frontend` and `backend` images to your registry.
-2. Copy the Helm chart or only the rendered environment values into your GitOps repository.
-3. In ArgoCD, point the application to the GitOps repo path that contains the chart or chart values.
-4. Replace inline secrets with your preferred GitOps-safe secret mechanism such as `ExternalSecret` or `SealedSecret`.
-
-Recommended GitOps repo path:
-
-- `k8s/chart`
-
-Example values file you can place in your GitOps repo:
-
-```yaml
-images:
-  backend:
-    repository: ghcr.io/pascariucosmin93/todo-backend
-    tag: "0.0.1"
-  frontend:
-    repository: ghcr.io/pascariucosmin93/todo-frontend
-    tag: "0.0.1"
-
-ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    frontend: todo.example.internal
-    backend: api.todo.example.internal
-    keycloak: auth.todo.example.internal
-
-frontend:
-  service:
-    type: LoadBalancer
-    annotations:
-      metallb.universe.tf/address-pool: public
-```
-
-Required Kubernetes secrets:
-
-- PostgreSQL secret
+- `todolist-postgres`
   Keys: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
-- Keycloak admin secret
-  Keys: `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`
 
 Example:
 
@@ -154,22 +83,18 @@ kubectl -n todo-app create secret generic todolist-postgres \
   --from-literal=POSTGRES_DB=todos \
   --from-literal=POSTGRES_USER=todos \
   --from-literal=POSTGRES_PASSWORD='strong-password'
-
-kubectl -n todo-app create secret generic todolist-keycloak-admin \
-  --from-literal=KEYCLOAK_ADMIN=admin \
-  --from-literal=KEYCLOAK_ADMIN_PASSWORD='strong-admin-password'
 ```
 
 ## CI/CD
 
-Two GitHub Actions workflows are included in [.github/workflows](/Users/cosmin.pascariu/todolist-keycloak/.github/workflows):
+The workflows are:
 
 - `ci.yml`
-  Runs backend tests, frontend build, and Helm validation on pushes and pull requests.
+  Runs backend tests, frontend build, and Helm validation.
 - `release.yml`
-  On `main`, builds and pushes dev image tags such as `0.0.<run_number>` and automatically updates `todolist-giops/k8s/chart/values.yaml`, similar to the `calculatorgaz -> gaz-gitops` flow.
+  Builds dev images and updates `todolist-giops/k8s/chart/values.yaml`.
 - `promote.yml`
-  Promotes an existing source tag to a release version such as `1.0.0`, pushes release aliases to GHCR, and can also update `todolist-giops` to the promoted version.
+  Promotes an existing image tag to a release version and can update GitOps.
 
 Expected GitHub secrets:
 
@@ -178,26 +103,9 @@ Expected GitHub secrets:
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
-- `KEYCLOAK_ADMIN`
-- `KEYCLOAK_ADMIN_PASSWORD`
-
-Promotion defaults:
-
-- initial app version: `0.0.1`
-- production promotion example: `1.0.0`
-
-Recommended flow:
-
-1. push to `main`
-2. `release.yml` builds images like `0.0.15` and updates `todolist-giops`
-3. ArgoCD syncs the dev version from `todolist-giops`
-4. when ready, run `promote.yml` with `source_tag=0.0.15` and `release_version=1.0.0`
-```
 
 ## Notes
 
-- the backend creates tables automatically on startup for fast bootstrap
+- Authentik is not deployed by this chart; run it separately and expose stable HTTPS OIDC endpoints
 - for production, adding `Alembic` is the next logical step
-- Keycloak and PostgreSQL should use stronger secret handling and persistent storage in real clusters
 - the older raw manifests in `infra/k8s/base` are still available, but Helm should be the main deployment path
-- Keycloak URLs used by the app should include `/auth`, for example `https://auth.todo.example.internal/auth`

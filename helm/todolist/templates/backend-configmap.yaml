@@ -7,7 +7,6 @@ metadata:
     {{- include "todolist.labels" . | nindent 4 }}
 data:
   CORS_ORIGINS: {{ .Values.backend.corsOrigins | toJson | quote }}
-  KEYCLOAK_REALM: {{ .Values.backend.keycloakRealm | quote }}
-  KEYCLOAK_FRONTEND_CLIENT_ID: {{ .Values.backend.keycloakFrontendClientId | quote }}
-  KEYCLOAK_ISSUER_URL: {{ .Values.backend.keycloakIssuerUrl | quote }}
-  KEYCLOAK_JWKS_URL: {{ tpl .Values.backend.keycloakJwksUrl . | quote }}
+  OIDC_CLIENT_ID: {{ .Values.auth.clientId | quote }}
+  OIDC_ISSUER_URL: {{ .Values.auth.issuerUrl | quote }}
+  OIDC_JWKS_URL: {{ .Values.auth.jwksUrl | quote }}

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
 import TodoList from "./components/TodoList";
-import keycloak from "./keycloak";
+import { authManager, completeSigninIfNeeded } from "./auth";
 
 const runtimeConfig = window.__APP_CONFIG__ || {};
 const apiUrl = runtimeConfig.VITE_API_URL || import.meta.env.VITE_API_URL;
 
-function authHeaders() {
+function authHeaders(accessToken) {
   return {
-    Authorization: `Bearer ${keycloak.token}`,
+    Authorization: `Bearer ${accessToken}`,
     "Content-Type": "application/json",
   };
 }
@@ -20,42 +20,34 @@ export default function App() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
+  const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
-    keycloak
-      .init({
-        onLoad: "login-required",
-        pkceMethod: "S256",
-        checkLoginIframe: false,
-      })
-      .then(async (authenticated) => {
-        if (!authenticated) {
-          setError("Autentificarea a esuat.");
+    (async () => {
+      try {
+        await completeSigninIfNeeded();
+        const user = await authManager.getUser();
+        if (!user || user.expired) {
+          await authManager.signinRedirect();
           return;
         }
-
-        const refreshInterval = window.setInterval(() => {
-          keycloak.updateToken(30).catch(() => keycloak.login());
-        }, 20000);
-
-        window.addEventListener("beforeunload", () => window.clearInterval(refreshInterval), {
-          once: true,
-        });
-
+        setAccessToken(user.access_token);
         try {
-          await loadProfile();
-          await loadTodos();
+          await loadProfile(user.access_token);
+          await loadTodos(user.access_token);
           setReady(true);
         } catch {
           setError("Nu am putut initializa sesiunea aplicatiei.");
         }
-      })
-      .catch(() => setError("Keycloak nu a putut fi initializat."));
+      } catch {
+        setError("OIDC authentication could not be initialized.");
+      }
+    })();
   }, []);
 
-  async function loadProfile() {
+  async function loadProfile(token) {
     const response = await fetch(`${apiUrl}/me`, {
-      headers: authHeaders(),
+      headers: authHeaders(token),
     });
 
     if (!response.ok) {
@@ -66,9 +58,9 @@ export default function App() {
     setProfile(data);
   }
 
-  async function loadTodos() {
+  async function loadTodos(token) {
     const response = await fetch(`${apiUrl}/todos`, {
-      headers: authHeaders(),
+      headers: authHeaders(token),
     });
 
     if (!response.ok) {
@@ -85,7 +77,7 @@ export default function App() {
 
     const response = await fetch(`${apiUrl}/todos`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: authHeaders(accessToken),
       body: JSON.stringify({ title, description: description || null }),
     });
 
@@ -96,13 +88,13 @@ export default function App() {
 
     setTitle("");
     setDescription("");
-    await loadTodos();
+    await loadTodos(accessToken);
   }
 
   async function toggleTodo(todo) {
     const response = await fetch(`${apiUrl}/todos/${todo.id}`, {
       method: "PUT",
-      headers: authHeaders(),
+      headers: authHeaders(accessToken),
       body: JSON.stringify({ completed: !todo.completed }),
     });
 
@@ -111,13 +103,13 @@ export default function App() {
       return;
     }
 
-    await loadTodos();
+    await loadTodos(accessToken);
   }
 
   async function deleteTodo(todoId) {
     const response = await fetch(`${apiUrl}/todos/${todoId}`, {
       method: "DELETE",
-      headers: authHeaders(),
+      headers: authHeaders(accessToken),
     });
 
     if (!response.ok) {
@@ -125,7 +117,7 @@ export default function App() {
       return;
     }
 
-    await loadTodos();
+    await loadTodos(accessToken);
   }
 
   if (error) {
@@ -141,12 +133,16 @@ export default function App() {
       <section className="hero-card">
         <div>
           <p className="eyebrow">Todo Platform</p>
-          <h1>Task-uri simple, login prin Keycloak</h1>
+          <h1>Task-uri simple, login prin Authentik</h1>
           <p className="hero-copy">
             Utilizator autentificat: <strong>{profile?.preferred_username}</strong>
           </p>
         </div>
-        <button className="secondary-button" onClick={() => keycloak.logout()} type="button">
+        <button
+          className="secondary-button"
+          onClick={() => authManager.signoutRedirect()}
+          type="button"
+        >
           Logout
         </button>
       </section>

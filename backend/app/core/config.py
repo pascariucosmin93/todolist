@@ -11,16 +11,13 @@ class Settings(BaseSettings):
         alias="DATABASE_URL",
     )
     cors_origins: list[str] = Field(default=["http://localhost:3000"], alias="CORS_ORIGINS")
-    keycloak_realm: str = Field(default="todo-app", alias="KEYCLOAK_REALM")
-    keycloak_frontend_client_id: str = Field(
-        default="todo-frontend", alias="KEYCLOAK_FRONTEND_CLIENT_ID"
+    oidc_client_id: str = Field(default="todo-frontend", alias="OIDC_CLIENT_ID")
+    oidc_issuer_url: str = Field(
+        default="https://auth.todo.local/application/o/todo-app/", alias="OIDC_ISSUER_URL"
     )
-    keycloak_issuer_url: str = Field(
-        default="http://localhost:3000/auth/realms/todo-app", alias="KEYCLOAK_ISSUER_URL"
-    )
-    keycloak_jwks_url: str = Field(
-        default="http://keycloak:8080/auth/realms/todo-app/protocol/openid-connect/certs",
-        alias="KEYCLOAK_JWKS_URL",
+    oidc_jwks_url: str = Field(
+        default="https://auth.todo.local/application/o/todo-app/jwks/",
+        alias="OIDC_JWKS_URL",
     )
 
     model_config = SettingsConfigDict(case_sensitive=False, env_file=".env", extra="ignore")

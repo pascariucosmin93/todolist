@@ -21,12 +21,12 @@ def get_current_user(
     token = credentials.credentials
 
     try:
-        signing_key = get_jwks_client(settings.keycloak_jwks_url).get_signing_key_from_jwt(token)
+        signing_key = get_jwks_client(settings.oidc_jwks_url).get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
             signing_key.key,
             algorithms=["RS256"],
-            issuer=settings.keycloak_issuer_url,
+            issuer=settings.oidc_issuer_url,
             options={"verify_aud": False},
         )
     except jwt.InvalidTokenError as exc:
@@ -35,7 +35,8 @@ def get_current_user(
             detail="Invalid or expired token.",
         ) from exc
 
-    if payload.get("azp") != settings.keycloak_frontend_client_id:
+    client_id = payload.get("azp") or payload.get("client_id")
+    if client_id != settings.oidc_client_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token was not issued for the configured client.",

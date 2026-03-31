@@ -38,10 +38,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-postgres" (include "todolist.fullname" .) -}}
 {{- end -}}
 
-{{- define "todolist.keycloakFullname" -}}
-{{- printf "%s-keycloak" (include "todolist.fullname" .) -}}
-{{- end -}}
-
 {{- define "todolist.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
 {{- default (include "todolist.fullname" .) .Values.serviceAccount.name -}}
@@ -49,4 +45,3 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- default "default" .Values.serviceAccount.name -}}
 {{- end -}}
 {{- end -}}
-

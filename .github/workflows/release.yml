@@ -45,8 +45,9 @@ jobs:
         env:
           PYTHONPATH: "."
           DATABASE_URL: "sqlite+pysqlite:///:memory:"
-          KEYCLOAK_ISSUER_URL: "http://localhost/auth/realms/todo-app"
-          KEYCLOAK_JWKS_URL: "http://localhost/auth/realms/todo-app/protocol/openid-connect/certs"
+          OIDC_ISSUER_URL: "https://auth.todo.local/application/o/todo-app/"
+          OIDC_JWKS_URL: "https://auth.todo.local/application/o/todo-app/jwks/"
+          OIDC_CLIENT_ID: "todo-frontend"
         run: pytest
 
       - uses: actions/setup-node@v4
@@ -63,9 +64,10 @@ jobs:
         working-directory: frontend
         env:
           VITE_API_URL: "https://api.todo.local/api/v1"
-          VITE_KEYCLOAK_URL: "https://auth.todo.local/auth"
-          VITE_KEYCLOAK_REALM: "todo-app"
-          VITE_KEYCLOAK_CLIENT_ID: "todo-frontend"
+          VITE_AUTH_AUTHORITY: "https://auth.todo.local/application/o/todo-app/"
+          VITE_AUTH_CLIENT_ID: "todo-frontend"
+          VITE_AUTH_REDIRECT_URI: "https://todo.local/"
+          VITE_AUTH_POST_LOGOUT_REDIRECT_URI: "https://todo.local/"
         run: npm run build
 
       - uses: azure/setup-helm@v4
@@ -107,9 +109,10 @@ jobs:
         run: |
           docker build \
             --build-arg VITE_API_URL=https://api.todo.example.internal/api/v1 \
-            --build-arg VITE_KEYCLOAK_URL=https://auth.todo.example.internal/auth \
-            --build-arg VITE_KEYCLOAK_REALM=todo-app \
-            --build-arg VITE_KEYCLOAK_CLIENT_ID=todo-frontend \
+            --build-arg VITE_AUTH_AUTHORITY=https://auth.todo.example.internal/application/o/todo-app/ \
+            --build-arg VITE_AUTH_CLIENT_ID=todo-frontend \
+            --build-arg VITE_AUTH_REDIRECT_URI=https://todo.example.internal/ \
+            --build-arg VITE_AUTH_POST_LOGOUT_REDIRECT_URI=https://todo.example.internal/ \
             -t ${{ steps.img.outputs.frontend }}:${{ steps.vars.outputs.short_sha }} \
             -t ${{ steps.img.outputs.frontend }}:${{ steps.vars.outputs.dev_version }} \
             ./frontend
@@ -133,8 +136,6 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          KEYCLOAK_ADMIN: ${{ secrets.KEYCLOAK_ADMIN }}
-          KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
         run: |
           set -euo pipefail
 
@@ -166,9 +167,6 @@ jobs:
           values["postgres"]["auth"]["username"] = ENV.fetch("POSTGRES_USER")
           values["postgres"]["auth"]["password"] = ENV.fetch("POSTGRES_PASSWORD")
           values["postgres"]["auth"]["existingSecret"] = ""
-          values["keycloak"]["admin"]["user"] = ENV.fetch("KEYCLOAK_ADMIN")
-          values["keycloak"]["admin"]["password"] = ENV.fetch("KEYCLOAK_ADMIN_PASSWORD")
-          values["keycloak"]["admin"]["existingSecret"] = ""
 
           File.write(values_path, values.to_yaml(line_width: -1))
           RUBY

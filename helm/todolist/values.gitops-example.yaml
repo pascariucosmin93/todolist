@@ -9,8 +9,6 @@ images:
 backend:
   corsOrigins:
     - "https://todo.example.internal"
-  keycloakIssuerUrl: "https://auth.todo.example.internal/auth/realms/todo-app"
-  keycloakJwksUrl: "http://todo-todolist-keycloak:8080/auth/realms/todo-app/protocol/openid-connect/certs"
 
 frontend:
   service:
@@ -20,33 +18,13 @@ frontend:
     externalTrafficPolicy: Cluster
   runtimeConfig:
     apiUrl: "https://api.todo.example.internal/api/v1"
-    keycloakUrl: "https://auth.todo.example.internal/auth"
-    keycloakRealm: "todo-app"
-    keycloakClientId: "todo-frontend"
-
-keycloak:
-  hostname: "https://auth.todo.example.internal/auth"
-  admin:
-    existingSecret: "todolist-keycloak-admin"
-  realmImport:
-    json: |
-      {
-        "realm": "todo-app",
-        "enabled": true,
-        "clients": [
-          {
-            "clientId": "todo-frontend",
-            "enabled": true,
-            "publicClient": true,
-            "standardFlowEnabled": true,
-            "redirectUris": ["https://todo.example.internal/*"],
-            "webOrigins": ["https://todo.example.internal"],
-            "attributes": {
-              "pkce.code.challenge.method": "S256"
-            }
-          }
-        ]
-      }
+auth:
+  authorityUrl: "https://auth.todo.example.internal/application/o/todo-app/"
+  issuerUrl: "https://auth.todo.example.internal/application/o/todo-app/"
+  jwksUrl: "https://auth.todo.example.internal/application/o/todo-app/jwks/"
+  clientId: "todo-frontend"
+  redirectUri: "https://todo.example.internal/"
+  postLogoutRedirectUri: "https://todo.example.internal/"
 
 ingress:
   enabled: true
@@ -54,7 +32,6 @@ ingress:
   hosts:
     frontend: todo.example.internal
     backend: api.todo.example.internal
-    keycloak: auth.todo.example.internal
 
 postgres:
   auth:

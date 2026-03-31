@@ -97,8 +97,6 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          KEYCLOAK_ADMIN: ${{ secrets.KEYCLOAK_ADMIN }}
-          KEYCLOAK_ADMIN_PASSWORD: ${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}
         run: |
           export VALUES_FILE="/tmp/todolist-gitops/k8s/chart/values.yaml"
           ruby <<'RUBY'
@@ -116,10 +114,6 @@ jobs:
           values["postgres"]["auth"]["username"] = ENV.fetch("POSTGRES_USER")
           values["postgres"]["auth"]["password"] = ENV.fetch("POSTGRES_PASSWORD")
           values["postgres"]["auth"]["existingSecret"] = ""
-
-          values["keycloak"]["admin"]["user"] = ENV.fetch("KEYCLOAK_ADMIN")
-          values["keycloak"]["admin"]["password"] = ENV.fetch("KEYCLOAK_ADMIN_PASSWORD")
-          values["keycloak"]["admin"]["existingSecret"] = ""
 
           File.write(values_file, values.to_yaml(line_width: -1))
           RUBY

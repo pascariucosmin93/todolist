@@ -37,17 +37,4 @@ spec:
                 name: {{ include "todolist.backendFullname" . }}
                 port:
                   number: {{ .Values.backend.service.port }}
-    {{- if .Values.keycloak.enabled }}
-    - host: {{ .Values.ingress.hosts.keycloak }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "todolist.keycloakFullname" . }}
-                port:
-                  number: {{ .Values.keycloak.service.port }}
-    {{- end }}
 {{- end }}
-
