@@ -29,7 +29,7 @@ backend:
     type: LoadBalancer
     port: 8000
   corsOrigins:
-    - "http://10.13.13.101:8097"
+    - "https://todo.example.internal"
   resources: {}
 
 frontend:
@@ -41,16 +41,16 @@ frontend:
     loadBalancerIP: ""
     externalTrafficPolicy: Cluster
   runtimeConfig:
-    apiUrl: "http://10.13.13.101:8100/api/v1"
+    apiUrl: "https://api.todo.example.internal/api/v1"
   resources: {}
 
 auth:
-  authorityUrl: "http://10.13.13.101:8098/application/o/todo-app/"
-  issuerUrl: "http://10.13.13.101:8098/application/o/todo-app/"
-  jwksUrl: "http://10.13.13.101:8098/application/o/todo-app/jwks/"
+  authorityUrl: "https://auth.todo.example.internal/"
+  issuerUrl: "https://auth.todo.example.internal/"
+  jwksUrl: "https://auth.todo.example.internal/.well-known/jwks.json"
   clientId: "todo-frontend"
-  redirectUri: "http://10.13.13.101:8097/"
-  postLogoutRedirectUri: "http://10.13.13.101:8097/"
+  redirectUri: "https://todo.example.internal/"
+  postLogoutRedirectUri: "https://todo.example.internal/"
 
 postgres:
   enabled: true

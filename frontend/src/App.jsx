@@ -133,7 +133,7 @@ export default function App() {
       <section className="hero-card">
         <div>
           <p className="eyebrow">Todo Platform</p>
-          <h1>Task-uri simple, login prin Authentik</h1>
+          <h1>Task-uri simple, login securizat</h1>
           <p className="hero-copy">
             Utilizator autentificat: <strong>{profile?.preferred_username}</strong>
           </p>
