@@ -7,3 +7,4 @@ metadata:
     {{- include "todolist.labels" . | nindent 4 }}
 data:
   VITE_API_URL: {{ .Values.frontend.runtimeConfig.apiUrl | quote }}
+  BACKEND_UPSTREAM_URL: {{ .Values.frontend.runtimeConfig.backendUpstreamUrl | quote }}

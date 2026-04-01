@@ -41,7 +41,8 @@ frontend:
     loadBalancerIP: ""
     externalTrafficPolicy: Cluster
   runtimeConfig:
-    apiUrl: "https://api.todo.example.internal/api/v1"
+    apiUrl: "/api/v1"
+    backendUpstreamUrl: "http://todo-todolist-backend:8000"
   resources: {}
 
 externalPostgres:
