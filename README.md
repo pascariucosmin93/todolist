@@ -1,3 +1,4 @@
+
 # Todo App
 
 This repository contains a small full-stack todo application designed to run locally with Docker and later be deployed to Kubernetes through Helm and ArgoCD.
