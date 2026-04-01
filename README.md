@@ -7,7 +7,6 @@ This repository contains a small full-stack todo application designed to run loc
 - Python backend with `FastAPI`
 - React frontend with `Vite`
 - `PostgreSQL` database
-- Authentication with an external OIDC provider
 - Local runtime with `Docker Compose`
 - Kubernetes packaging with `Helm`
 - CI/CD with `GitHub Actions`
@@ -15,7 +14,7 @@ This repository contains a small full-stack todo application designed to run loc
 ## Repository Layout
 
 ```text
-todolist-keycloak/
+todolist/
 ├── backend/
 ├── frontend/
 ├── helm/todolist/
@@ -32,25 +31,15 @@ todolist-keycloak/
 cp .env.example .env
 ```
 
-2. Point the OIDC values to your identity provider.
-
-3. Start the stack:
+2. Start the stack:
 
 ```bash
 docker compose up --build
 ```
 
-## Authentication Flow
-
-- the frontend uses generic OIDC Authorization Code + PKCE
-- the user authenticates in the configured identity provider
-- the frontend sends the access token as a bearer token to the backend
-- the backend validates the issuer and JWKS
-- todos are stored per authenticated user using the token `sub`
-
 ## Helm Chart
 
-The Helm chart is available in [helm/todolist](/Users/cosmin.pascariu/todolist-keycloak/helm/todolist).
+The Helm chart is available in [helm/todolist](/Users/cosmin.pascariu/Desktop/todolist/helm/todolist).
 
 It packages:
 
@@ -59,15 +48,6 @@ It packages:
 - PostgreSQL
 - ingress
 - config maps and secrets
-
-It expects an external OIDC provider and configurable OIDC endpoints:
-
-- `auth.authorityUrl`
-- `auth.issuerUrl`
-- `auth.jwksUrl`
-- `auth.clientId`
-- `auth.redirectUri`
-- `auth.postLogoutRedirectUri`
 
 ## Kubernetes Secret
 
@@ -106,6 +86,5 @@ Expected GitHub secrets:
 
 ## Notes
 
-- No identity provider is deployed by this chart; configure stable HTTPS OIDC endpoints separately
 - for production, adding `Alembic` is the next logical step
 - the older raw manifests in `infra/k8s/base` are still available, but Helm should be the main deployment path

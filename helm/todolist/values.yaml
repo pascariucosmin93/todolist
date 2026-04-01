@@ -44,13 +44,15 @@ frontend:
     apiUrl: "https://api.todo.example.internal/api/v1"
   resources: {}
 
-auth:
-  authorityUrl: "https://auth.todo.example.internal/"
-  issuerUrl: "https://auth.todo.example.internal/"
-  jwksUrl: "https://auth.todo.example.internal/.well-known/jwks.json"
-  clientId: "todo-frontend"
-  redirectUri: "https://todo.example.internal/"
-  postLogoutRedirectUri: "https://todo.example.internal/"
+externalPostgres:
+  enabled: false
+  host: ""
+  port: 5432
+  bootstrapDatabase: "postgres"
+  auth:
+    database: "todolist"
+    username: "devops"
+    password: "devops"
 
 postgres:
   enabled: true

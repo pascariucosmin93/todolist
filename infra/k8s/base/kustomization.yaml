@@ -3,6 +3,4 @@ resources:
   - backend
   - frontend
   - postgres
-  - keycloak
   - ingress.yaml
-

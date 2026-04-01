@@ -11,14 +11,9 @@ class Settings(BaseSettings):
         alias="DATABASE_URL",
     )
     cors_origins: list[str] = Field(default=["http://localhost:3000"], alias="CORS_ORIGINS")
-    oidc_client_id: str = Field(default="todo-frontend", alias="OIDC_CLIENT_ID")
-    oidc_issuer_url: str = Field(
-        default="https://auth.todo.local/application/o/todo-app/", alias="OIDC_ISSUER_URL"
-    )
-    oidc_jwks_url: str = Field(
-        default="https://auth.todo.local/application/o/todo-app/jwks/",
-        alias="OIDC_JWKS_URL",
-    )
+    app_login_username: str = Field(default="devops", alias="APP_LOGIN_USERNAME")
+    app_login_password: str = Field(default="devops", alias="APP_LOGIN_PASSWORD")
+    app_session_token: str = Field(default="devops-session-token", alias="APP_SESSION_TOKEN")
 
     model_config = SettingsConfigDict(case_sensitive=False, env_file=".env", extra="ignore")
 

@@ -5,7 +5,3 @@ metadata:
   namespace: todo-app
 data:
   VITE_API_URL: "https://api.todo.local/api/v1"
-  VITE_KEYCLOAK_URL: "https://auth.todo.local"
-  VITE_KEYCLOAK_REALM: "todo-app"
-  VITE_KEYCLOAK_CLIENT_ID: "todo-frontend"
-

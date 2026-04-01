@@ -5,7 +5,3 @@ metadata:
   namespace: todo-app
 data:
   CORS_ORIGINS: "https://todo.local"
-  KEYCLOAK_REALM: "todo-app"
-  KEYCLOAK_FRONTEND_CLIENT_ID: "todo-frontend"
-  KEYCLOAK_ISSUER_URL: "https://auth.todo.local/realms/todo-app"
-  KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/todo-app/protocol/openid-connect/certs"

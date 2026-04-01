@@ -18,13 +18,16 @@ frontend:
     externalTrafficPolicy: Cluster
   runtimeConfig:
     apiUrl: "https://api.todo.example.internal/api/v1"
-auth:
-  authorityUrl: "https://auth.todo.example.internal/application/o/todo-app/"
-  issuerUrl: "https://auth.todo.example.internal/application/o/todo-app/"
-  jwksUrl: "https://auth.todo.example.internal/application/o/todo-app/jwks/"
-  clientId: "todo-frontend"
-  redirectUri: "https://todo.example.internal/"
-  postLogoutRedirectUri: "https://todo.example.internal/"
+
+externalPostgres:
+  enabled: false
+  host: ""
+  port: 5432
+  bootstrapDatabase: "postgres"
+  auth:
+    database: "todolist"
+    username: "devops"
+    password: "devops"
 
 ingress:
   enabled: true

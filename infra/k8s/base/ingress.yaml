@@ -26,14 +26,3 @@ spec:
                 name: backend
                 port:
                   number: 8000
-    - host: auth.todo.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: keycloak
-                port:
-                  number: 8080
-

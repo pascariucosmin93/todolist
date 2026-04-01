@@ -38,6 +38,22 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-postgres" (include "todolist.fullname" .) -}}
 {{- end -}}
 
+{{- define "todolist.databaseHost" -}}
+{{- if .Values.externalPostgres.enabled -}}
+{{- .Values.externalPostgres.host -}}
+{{- else -}}
+{{- include "todolist.postgresFullname" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "todolist.databasePort" -}}
+{{- if .Values.externalPostgres.enabled -}}
+{{- .Values.externalPostgres.port | toString -}}
+{{- else -}}
+{{- .Values.postgres.service.port | toString -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "todolist.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
 {{- default (include "todolist.fullname" .) .Values.serviceAccount.name -}}
