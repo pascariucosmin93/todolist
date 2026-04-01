@@ -61,3 +61,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- default "default" .Values.serviceAccount.name -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "todolist.backendRuntimeSecretName" -}}
+{{- if .Values.backend.runtimeSecret.existingSecret -}}
+{{- .Values.backend.runtimeSecret.existingSecret -}}
+{{- else -}}
+{{- printf "%s-secret" (include "todolist.backendFullname" .) -}}
+{{- end -}}
+{{- end -}}

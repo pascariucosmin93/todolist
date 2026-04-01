@@ -21,8 +21,8 @@ export default function App() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
-  const [username, setUsername] = useState("devops");
-  const [password, setPassword] = useState("devops");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
 
   useEffect(() => {
@@ -101,8 +101,8 @@ export default function App() {
     setTodos([]);
     setTitle("");
     setDescription("");
-    setUsername("devops");
-    setPassword("devops");
+    setUsername("");
+    setPassword("");
     setError("");
   }
 

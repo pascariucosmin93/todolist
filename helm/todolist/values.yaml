@@ -30,6 +30,8 @@ backend:
     port: 8000
   corsOrigins:
     - "https://todo.example.internal"
+  runtimeSecret:
+    existingSecret: ""
   resources: {}
 
 frontend:
@@ -52,8 +54,13 @@ externalPostgres:
   bootstrapDatabase: "postgres"
   auth:
     database: "todolist"
-    username: "devops"
-    password: "devops"
+    username: ""
+    password: ""
+
+appAuth:
+  username: ""
+  password: ""
+  sessionToken: ""
 
 postgres:
   enabled: true

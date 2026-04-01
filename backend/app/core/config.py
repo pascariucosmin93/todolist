@@ -11,9 +11,9 @@ class Settings(BaseSettings):
         alias="DATABASE_URL",
     )
     cors_origins: list[str] = Field(default=["http://localhost:3000"], alias="CORS_ORIGINS")
-    app_login_username: str = Field(default="devops", alias="APP_LOGIN_USERNAME")
-    app_login_password: str = Field(default="devops", alias="APP_LOGIN_PASSWORD")
-    app_session_token: str = Field(default="devops-session-token", alias="APP_SESSION_TOKEN")
+    app_login_username: str = Field(default="", alias="APP_LOGIN_USERNAME")
+    app_login_password: str = Field(default="", alias="APP_LOGIN_PASSWORD")
+    app_session_token: str = Field(default="change-me-session-token", alias="APP_SESSION_TOKEN")
 
     model_config = SettingsConfigDict(case_sensitive=False, env_file=".env", extra="ignore")
 

@@ -29,7 +29,7 @@ spec:
           imagePullPolicy: {{ .Values.images.postgres.pullPolicy }}
           envFrom:
             - secretRef:
-                name: {{ include "todolist.backendFullname" . }}-secret
+                name: {{ include "todolist.backendRuntimeSecretName" . }}
           command:
             - /bin/sh
             - -ec
@@ -53,14 +53,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "todolist.backendFullname" . }}-config
+            - secretRef:
+                name: {{ include "todolist.backendRuntimeSecretName" . }}
           env:
-            {{- if .Values.externalPostgres.enabled }}
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "todolist.backendFullname" . }}-secret
-                  key: DATABASE_URL
-            {{- else if .Values.postgres.auth.existingSecret }}
+            {{- if and (not .Values.backend.runtimeSecret.existingSecret) (not .Values.externalPostgres.enabled) .Values.postgres.auth.existingSecret }}
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
@@ -78,12 +74,6 @@ spec:
                   key: {{ .Values.postgres.auth.existingSecretKeys.password }}
             - name: DATABASE_URL
               value: {{ printf "postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@%s:%v/$(POSTGRES_DB)" (include "todolist.postgresFullname" .) .Values.postgres.service.port | quote }}
-            {{- else }}
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "todolist.backendFullname" . }}-secret
-                  key: DATABASE_URL
             {{- end }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
