@@ -16,6 +16,10 @@ spec:
       containers:
         - name: backend
           image: ghcr.io/example/todo-backend:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 8000
           envFrom:
